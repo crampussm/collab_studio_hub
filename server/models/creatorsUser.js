@@ -22,7 +22,7 @@ const UserCreatorSchema = new Schema({
     },
     password:{
         type: String,
-        requiredL: true
+        required: true
     },
     type:{
         type: String,
