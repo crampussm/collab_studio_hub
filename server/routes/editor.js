@@ -1,6 +1,6 @@
 const express = require("express");
 const bcrypt = require('bcrypt');
-const UserCreator = require("../models/creatorsUser");
+const UserEditor = require("../models/editorUser");
 var jwt = require('jsonwebtoken');
 const {query, validationResult, body, oneOf} = require('express-validator');
 
@@ -23,7 +23,7 @@ router.post('/signup', [
         console.log(email, firstname, lastname, username, password);
         const salt = await bcrypt.genSalt(10);
         const securePassword = await bcrypt.hash(password, salt);
-        const user = await UserCreator.create({
+        const user = await UserEditor.create({
             firstname: firstname,
             lastname: lastname,
             username: username,
@@ -61,9 +61,9 @@ router.post('/login', [
     try {
         const {usernameOrEmail, password} = req.body;
         console.log(usernameOrEmail, password);
-        let user = await UserCreator.findOne({email: usernameOrEmail});
+        let user = await UserEditor.findOne({email: usernameOrEmail});
         if (!user) {
-            user = await UserCreator.findOne({username: usernameOrEmail});
+            user = await UserEditor.findOne({username: usernameOrEmail});
         }
 
         if (!user) {

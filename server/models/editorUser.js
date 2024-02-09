@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { Schema } = mongoose;
 
-const UserCreatorSchema = new Schema({
+const editorUserSchema = new Schema({
     firstname:{
         type: String,
         required: true
@@ -26,10 +26,10 @@ const UserCreatorSchema = new Schema({
     },
     type:{
         type: String,
-        default: "creator"
+        default: "editor"
     },
-  });
+})
 
-const UserCreator = mongoose.model('UserCreator', UserCreatorSchema);
-UserCreator.createIndexes()
-module.exports = UserCreator;
+const UserEditor = mongoose.model('UserEditor', editorUserSchema);
+UserEditor.createIndexes();
+module.exports = UserEditor;
