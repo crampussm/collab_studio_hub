@@ -14,6 +14,7 @@ const workSpaceSchema = new Schema({
     },
     ownerId:{
         type: mongoose.Schema.Types.ObjectId,
+        required: true,
         ref: 'user'
     }
 })

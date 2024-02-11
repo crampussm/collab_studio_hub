@@ -3,11 +3,21 @@ const bcrypt = require('bcrypt');
 const UserCreator = require("../models/creatorsUser");
 const workSpace = require("../models/workspace");
 const UserEditor = require("../models/editorUser");
+const Task = require('../models/task');
 var jwt = require('jsonwebtoken');
 const {query, validationResult, body, oneOf} = require('express-validator');
 const getUser = require('../middleware/getuser');
 const router = express.Router();
 const JWT_SECRET = "secrettosign";
+
+const getIdByUsername = async(request, model, finalArray)=>{
+    for(var _ of request){
+        var user = await model.findOne({username: _});
+        var userId = user.id;
+        finalArray.push(userId); 
+    }
+    return finalArray;
+}
 
 router.post('/signup', [
     body('username', 'Enter a valid username').isLength({min: 2}).matches(/^[a-z0-9.,'!&]+$/),
@@ -109,16 +119,10 @@ router.post('/createworkspace',  getUser, [
 
     try {
         const membersId = [req.id];
-        const members = req.body.members;
-        for(var member of members){
-            var user = await UserEditor.findOne({username: member});
-            var userId = user.id;
-            membersId.push(userId);
-        }
         const workspace = await workSpace.create({
             name: req.body.name,
             description: req.body.description,
-            members: membersId,
+            members: await getIdByUsername(req.body.members, UserEditor, membersId),
             ownerId: req.id
         });
         success = true;
@@ -141,21 +145,14 @@ router.put('/updateworkspace/:id', getUser, [
         return res.send({"error": "Inapropiate Request", success});
     }
     try {
-        const membersId = workspace.members;
+        const membersId = [req.id];
         const {name, description, members} = req.body;
         
         const newWorkSpace =  {};
         if(name){newWorkSpace.name = name};
         if(description){newWorkSpace.description = description};
         if(members){
-            for(var member of members){
-                var user = await UserEditor.findOne({username: member});
-                var userId = user.id;
-                if(!membersId.includes(userId)){
-                    membersId.push(userId);
-                }
-            }
-            newWorkSpace.members = membersId;
+            newWorkSpace.members = await getIdByUsername(members, UserEditor, membersId);
         }
 
         workspace = await workSpace.findByIdAndUpdate(req.params.id, {$set: newWorkSpace}, {new: true});
@@ -180,6 +177,47 @@ router.delete('/deleteworkspace/:id', getUser, async(req, res)=>{
     try {
         workspace = await workSpace.findByIdAndDelete({_id: req.params.id});
         res.json({"Success": "workspace deleted succesfully", workspace});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({success ,"err": "some eror occured"});
+    }
+})
+
+router.post('/createtask/:workspaceid', getUser, [
+    body('name', 'Enter a valid Workspace name').isLength({min: 2}),
+], async(req, res)=>{
+    let success = false;
+    
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.send({error: errors.array(), success});
+    }
+
+    const creator = await UserCreator.findById(req.id);
+    if(!creator){return res.send({"error": "Invalid Request", success})};
+    const workspace = await workSpace.findById(req.params.workspaceid);
+    if(workspace.ownerId.toString()!=req.id){return res.send({"error": "Invalid Request. Workspace auth denied", success})};
+
+    try {
+        var videoEditors = [req.id];
+        var captionWriters = [req.id];
+        var thumbnailEditors = [req.id];
+        var tdtWriters = [req.id];
+
+        const task = await Task.create({
+            workspceId: req.params.workspaceid,
+            ownerId: req.id,
+            name: req.body.name,
+            description: req.body.description,
+            videoLink: req.body.videolink,
+            videoEditors: await getIdByUsername(req.body.videoeditors, UserEditor, videoEditors),
+            captionWriters:await getIdByUsername(req.body.captionwriters, UserEditor, captionWriters),
+            thumbnailEditors: await getIdByUsername(req.body.thumbnaileditors, UserEditor, thumbnailEditors),
+            tdtWriters: await getIdByUsername(req.body.tdtwriters, UserEditor, tdtWriters),
+        })
+
+        success = true;
+        res.json({"messege": "task added succesfully", task});
     } catch (error) {
         console.log(error);
         res.status(500).json({success ,"err": "some eror occured"});
