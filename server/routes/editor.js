@@ -1,6 +1,8 @@
 const express = require("express");
 const bcrypt = require('bcrypt');
 const UserEditor = require("../models/editorUser");
+const Task = require('../models/task');
+const getUser = require('../middleware/getuser');
 var jwt = require('jsonwebtoken');
 const {query, validationResult, body, oneOf} = require('express-validator');
 
@@ -88,6 +90,38 @@ router.post('/login', [
         res.status(500).json({"err": "some eror occured"});
     }
 
+})
+
+router.put('/updatetask/:taskid', getUser, async(req, res)=>{
+    let success = false;
+
+    var task = await Task.findById(req.params.taskid);
+    if(!task){return res.send({"error": "No such task found", success});}
+    const editor = await UserEditor.findById(req.id);
+    if(!editor){return res.send({"error": "Inapropiate Request", success});}
+
+    try {
+        const {editedvideolink, writtencaption, editedthumbnail, writtentdt} = req.body;
+
+        const isVideoEditor = task.videoEditors.includes(req.id);
+        const isCaptionWriter = task.captionWriters.includes(req.id);
+        const isThumbnailEditor = task.thumbnailEditors.includes(req.id);
+        const isTdtWriter = task.tdtWriters.includes(req.id);
+
+        const newTask =  {};
+        if(editedvideolink && isVideoEditor){newTask.editedVideoLink = editedvideolink};
+        if(writtencaption && isCaptionWriter){newTask.writtenCaption = writtencaption};
+        if(editedthumbnail && isThumbnailEditor){newTask.editedThumbnail = editedthumbnail};
+        if(writtentdt && isTdtWriter){newTask.writtenTdt = writtentdt};
+
+        newTask = await Task.findByIdAndUpdate(req.params.taskid, {$set: newTask}, {new: true});
+        success = true;
+        res.json(task);
+        
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({success ,"err": "some eror occured"});
+    }
 })
 
 module.exports = router;

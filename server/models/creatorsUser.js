@@ -24,6 +24,12 @@ const UserCreatorSchema = new Schema({
         type: String,
         required: true
     },
+    authToken:{
+        type: Object,
+    },
+    clientSecret:{
+        type: Object,
+    },
     type:{
         type: String,
         default: "creator"

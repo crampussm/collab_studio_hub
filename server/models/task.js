@@ -19,8 +19,11 @@ const taskSchema = new Schema({
         type: String,
     },
     videoLink:{
-        type: String,
+        type: Array,
         required: true,
+    },
+    instructions:{
+        type: Array,
     },
     videoEditors:{
         type: Array,
@@ -47,6 +50,22 @@ const taskSchema = new Schema({
         default: "pending"
     },
     tdtWritingStatus:{
+        type: String,
+        default: "pending"
+    },
+    editedVideoLink:{
+        type: Array,
+    },
+    writtenCaption:{
+        type: Array,
+    },
+    editedThumbnail:{
+        type: Array,
+    },
+    writtenTdt:{
+        type: Array,
+    },
+    taskStatus:{
         type: String,
         default: "pending"
     }
