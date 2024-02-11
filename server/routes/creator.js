@@ -306,9 +306,10 @@ router.post('/publishvideo/:videolink', getUser, async(req, res)=>{
     if(!creator){return res.send({"error": "Inapropiate Request", success});}
 
     try {
-        const auth = await creator.authToken;
-        const result = uploadVideo(auth, req.params.videolink, thumbnailLink, captionslink, title, description, tags);
 
+        // TO ADD BODY REQUESTS
+        const auth = await creator.authToken;
+        const result = uploadVideo(auth, req.params.videolink, thumbnailLink, captionslink, title, description, tags, mode);
 
         success = true;
         res.json({result, success});

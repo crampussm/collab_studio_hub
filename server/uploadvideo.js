@@ -8,7 +8,7 @@ const categoryIds = {
     ScienceTechnology: 28
 }
 
-function uploadVideo(auth, videoLink, thumbnailLink, captionslink, title, description, tags) {
+function uploadVideo(auth, videoLink, thumbnailLink, captionslink, title, description, tags, mode) {
     const service = google.youtube('v3')
   
     service.videos.insert({
@@ -24,7 +24,7 @@ function uploadVideo(auth, videoLink, thumbnailLink, captionslink, title, descri
           defaultAudioLanguage: 'en'
         },
         status: {
-          privacyStatus: "private",
+          privacyStatus: mode,
         },
       },
       media: {
