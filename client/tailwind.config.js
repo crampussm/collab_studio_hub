@@ -8,6 +8,9 @@ module.exports = {
         cshgreen: '#019963',
         cshoffwhite: '#f5efe8',
       },
+      fontFamily: {
+        csh: ["Cabin", "sans-serif"],
+      }
     },
   },
   plugins: [],

@@ -81,12 +81,12 @@ router.post('/login', [
         }
 
         if (!user) {
-            return res.status(400).send({error: "Wrong email or username", success});
+            return res.status(400).send({error: [{msg: "Wrong email or username"}], success});
         }
 
         const isPassword = await bcrypt.compare(password, user.password);
         if (!isPassword) {
-            return res.status(400).send({error: "Wrong password", success});
+            return res.status(400).send({error: [{msg: "Wrong password"}], success});
         }
 
         success = true;
@@ -99,7 +99,7 @@ router.post('/login', [
         res.json({authToken, success})
     } catch (error) {
         console.log(error);
-        res.status(500).json({success, "err": "some eror occured"});
+        res.status(500).json({success, error: "some eror occured"});
     }
 
 })
