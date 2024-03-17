@@ -1,8 +1,10 @@
-import React from 'react'
+import React, {useEffect} from 'react';
 import { Menu, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 function Landing(props) {
+    const authToken = localStorage.getItem('token');
+    const authType = localStorage.getItem('type');
     const navigate = useNavigate();
     const handleShowMenu = ()=>{
         const hambergerMenu = document.getElementById('hamberger-menu');
@@ -12,6 +14,15 @@ function Landing(props) {
         const hambergerMenu = document.getElementById('hamberger-menu');
         hambergerMenu.style.display = 'none'
     }
+    useEffect(()=>{
+        if(authToken){
+          if(authType==='creator'){
+            navigate("/creator/home");
+          }else if(authType==='editor'){
+            navigate("/editor/home");
+          }
+        }
+    }, [])
   return (
     <div>
         <nav>

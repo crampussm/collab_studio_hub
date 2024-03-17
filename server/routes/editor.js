@@ -21,7 +21,14 @@ router.post('/signup', [
         return res.send({ errors: errors.array(), success});
     }
     try {
-        const {email, firstname, lastname, username, password} = req.body;;
+        const {email, firstname, lastname, username, password} = req.body;
+
+        let creatorbyusername = await UserEditor.findOne({username: username});
+        if(creatorbyusername){return res.status(400).send({error: [{msg: "User must be unique"}], success});}
+
+        let creatorbyemail = await UserEditor.findOne({email: email});
+        if(creatorbyemail){return res.status(400).send({error: [{msg: "Email already exists"}], success});}
+
         console.log(email, firstname, lastname, username, password);
         const salt = await bcrypt.genSalt(10);
         const securePassword = await bcrypt.hash(password, salt);
@@ -39,10 +46,10 @@ router.post('/signup', [
             }
         }
         const authToken = jwt.sign(data, JWT_SECRET);
-        res.send({authToken ,success});
+        res.send({authToken ,success, type:'editor'});
     } catch (error) {
         console.error(error);
-        res.status(500).json({"err": "some eror occured"});
+        res.status(500).json({success, error: [{msg: "some error occured"}]});
     }
 });
 
@@ -69,12 +76,12 @@ router.post('/login', [
         }
 
         if (!user) {
-            return res.status(400).send({error: "Wrong email or username", success});
+            return res.status(400).send({error: [{msg: "Wrong email or username"}], success});
         }
 
         const isPassword = await bcrypt.compare(password, user.password);
         if (!isPassword) {
-            return res.status(400).send({error: "Wrong password", success});
+            return res.status(400).send({error: [{msg: "Wrong password"}], success});
         }
 
         success = true;
@@ -84,10 +91,10 @@ router.post('/login', [
             }
         }
         const authToken = jwt.sign(data, JWT_SECRET);
-        res.json({authToken, success})
+        res.json({authToken, success, type:'editor'});
     } catch (error) {
         console.log(error);
-        res.status(500).json({"err": "some eror occured"});
+        res.status(500).json({success, error: [{msg: "some error occured"}]});
     }
 
 })

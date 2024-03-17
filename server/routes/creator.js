@@ -14,9 +14,11 @@ const JWT_SECRET = "secrettosign";
 
 const getIdByUsername = async(request, model, finalArray)=>{
     for(var _ of request){
-        var user = await model.findOne({username: _});
+        var user = await model.findOne({username: _.username});
         var userId = user.id;
-        finalArray.push(userId); 
+        var role = _.role;
+        var username = _.username;
+        finalArray.push({userId, username, role});
     }
     return finalArray;
 }
@@ -33,7 +35,14 @@ router.post('/signup', [
         return res.send({ errors: errors.array(), success});
     }
     try {
-        const {email, firstname, lastname, username, password} = req.body;;
+        const {email, firstname, lastname, username, password} = req.body;
+
+        let creatorbyusername = await UserCreator.findOne({username: username});
+        if(creatorbyusername){return res.status(400).send({error: [{msg: "User must be unique"}], success});}
+
+        let creatorbyemail = await UserCreator.findOne({email: email});
+        if(creatorbyemail){return res.status(400).send({error: [{msg: "Email already exists"}], success});}
+
         console.log(email, firstname, lastname, username, password);
         const salt = await bcrypt.genSalt(10);
         const securePassword = await bcrypt.hash(password, salt);
@@ -42,7 +51,7 @@ router.post('/signup', [
             lastname: lastname,
             username: username,
             email: email,
-            password: securePassword
+            password: securePassword,
         })
         success = true;
         const data = {
@@ -51,10 +60,10 @@ router.post('/signup', [
             }
         }
         const authToken = jwt.sign(data, JWT_SECRET);
-        res.send({authToken ,success});
+        res.send({authToken ,success, type:'creator'});
     } catch (error) {
         console.error(error);
-        res.status(500).json({"err": "some eror occured"});
+        res.status(500).json({success, error: [{msg: "some error occured"}]});
     }
 });
 
@@ -96,10 +105,10 @@ router.post('/login', [
             }
         }
         const authToken = jwt.sign(data, JWT_SECRET);
-        res.json({authToken, success})
+        res.json({authToken, success, type:'creator'})
     } catch (error) {
         console.log(error);
-        res.status(500).json({success, error: "some eror occured"});
+        res.status(500).json({success, error: [{msg: "some error occured"}]});
     }
 
 })
@@ -147,7 +156,7 @@ router.post('/createworkspace',  getUser, [
     }
 
     try {
-        const membersId = [req.id];
+        const membersId = [];
         const workspace = await workSpace.create({
             name: req.body.name,
             description: req.body.description,
@@ -174,7 +183,7 @@ router.put('/updateworkspace/:id', getUser, [
         return res.send({"error": "Inapropiate Request", success});
     }
     try {
-        const membersId = [req.id];
+        const membersId = [];
         const {name, description, members} = req.body;
         
         const newWorkSpace =  {};
@@ -270,7 +279,7 @@ router.put('/updatetask/:taskid', getUser, async(req, res)=>{
 
         const {name, description, videoLink, instructions, videoeditors, captionwriters, thumbnaileditors, tdtwriters, videoeditingstatus, captionwritingstatus, thumbnaileditingstatus, tdtwritingstatus, editedvideolink, writtencaption, editedthumbnail, writtentdt, taskstatus} = req.body;
 
-        const newTask =  {};
+        var newTask =  {};
         if(name){newTask.name = name};
         if(description){newTask.description = description};
         if(videoLink){newTask.videoLink = videoLink};
@@ -313,6 +322,50 @@ router.post('/publishvideo/:videolink', getUser, async(req, res)=>{
 
         success = true;
         res.json({result, success});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({success ,"err": "some eror occured"});
+    }
+})
+
+router.get('/workspaces/fetch', getUser, async(req, res)=>{
+   try {
+        let success = false;
+        var workspaces = await workSpace.find({ownerId: req.id});
+        if(workspaces.length==0){return res.send({success});}
+
+        success = true;
+        res.send({success, workspaces});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({success ,"err": "some eror occured"});
+    }
+    
+})
+
+router.get('/workspaces/tasks/fetch/:workspaceId', getUser, async(req, res)=>{
+   try {
+        let success = false;
+        var tasks = await Task.find({workspceId: req.params.workspaceId});
+        if(tasks.length==0){return res.send({success});}
+
+        success = true;
+        res.send({success, tasks});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({success ,"err": "some eror occured"});
+    }
+    
+})
+
+router.get('/workspaces/members/fetch/:workspaceId', getUser, async(req, res)=>{
+    let success = false;
+    try {
+        const workspace = await workSpace.findById(req.params.workspaceId);
+        if(!workspace) { return res.send({"error": "no such workspace found", success}); }
+        const members = workspace.members;
+        success = true;
+        res.json({success, members});
     } catch (error) {
         console.log(error);
         res.status(500).json({success ,"err": "some eror occured"});
